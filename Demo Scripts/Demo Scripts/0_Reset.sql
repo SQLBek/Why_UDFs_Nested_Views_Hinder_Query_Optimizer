@@ -1,15 +1,20 @@
+--
+-- IMPORTANT: 
+-- 1. PRE-STAGE & EXECUTE SCRIPT #5 WITH ACTUAL EXEC PLAN ON
+-- 2. WIPE XE Files
+/*
+sudo ls -al /var/opt/mssql/XE/
+sudo rm -f /var/opt/mssql/XE/TSQL_*.xel
+*/
+
 USE Master;
 GO
-ALTER DATABASE AutoDealershipDemo
-SET COMPATIBILITY_LEVEL = 120
-GO
+
 USE AutoDealershipDemo;
 GO
 DBCC FREEPROCCACHE
 GO
---
--- IMPORTANT: PRE-STAGE & EXECUTE SCRIPT #5
---
+
 
 -- EXEC master.dbo.xp_cmdshell 'DIR F:\ && DEL F:\TSQL_*.xel && DIR F:\';
 -- GO

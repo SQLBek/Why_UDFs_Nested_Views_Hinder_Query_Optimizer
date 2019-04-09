@@ -98,16 +98,41 @@ ORDER BY
 -- Impact of scalar UDFs are hidden!
 -- Let's look at simpler example query
 -- Check STATISTICS IO, check XE
-SELECT TOP 100
+SELECT TOP 1000
 	Inventory.InventoryID,
 	Inventory.VIN,
 	dbo.udf_CalcNetProfit(Inventory.VIN)
 FROM dbo.Inventory
 INNER JOIN SalesHistory
 	ON SalesHistory.InventoryID = Inventory.InventoryID;
+ GO
+
+  
+  
 
 
 
+
+
+-----
+-- BONUS - sys.dm_exec_function_stats
+-- SQL SERVER 2016 & higher
+SELECT OBJECT_NAME(object_id) AS function_name,
+	type_desc,
+	execution_count,
+	total_worker_time,
+	-- last_worker_time, min_worker_time, max_worker_time,
+	total_logical_reads,
+	-- last_logical_reads, min_logical_reads, max_logical_reads
+	total_elapsed_time,
+	-- last_elapsed_time, min_elapsed_time, max_elapsed_time
+	cached_time
+FROM sys.dm_exec_function_stats
+WHERE object_name(object_id) IS NOT NULL;
+GO
+  
+  
+  
 
 
 
@@ -144,9 +169,39 @@ END
 
 
 -----
+-- Why is this happening?!?
+-- https://docs.microsoft.com/en-us/sql/relational-databases/user-defined-functions/scalar-udf-inlining?view=sqlallproducts-allversions#t-sql-scalar-user-defined-functions
+-- 
+-- 1. Iterative invocation: 
+--    UDFs are invoked in an iterative manner, once per qualifying tuple. This incurs additional costs of 
+--    repeated context switching due to function invocation. Especially, UDFs that execute SQL queries in 
+--    their definition are severely affected.
+-- 
+-- 2. Lack of costing: 
+--    During optimization, only relational operators are costed, while scalar operators are not. Prior to the 
+--    introduction of scalar UDFs, other scalar operators were generally cheap and did not require costing. A 
+--    small CPU cost added for a scalar operation was enough. There are scenarios where the actual cost is 
+--    significant, and yet still remains underrepresented.
+-- 
+-- 3. Interpreted execution: 
+--    UDFs are evaluated as a batch of statements, executed statement-by-statement. Each statement itself is 
+--    compiled, and the compiled plan is cached. Although this caching strategy saves some time as it avoids 
+--    recompilations, each statement executes in isolation. No cross-statement optimizations are carried out.
+-- 
+-- 4. Serial execution: 
+--    SQL Server does not allow intra-query parallelism in queries that invoke UDFs.
+  
+  
+  
+
+
+
+
+
+-----
 -- Break-out Code?
 -- Write a situation specific, focused query.
-SELECT 
+SELECT TOP 1000
 	Inventory.InventoryID,
 	Inventory.VIN,
 	SalesHistory.SellPrice - Inventory.InvoicePrice   

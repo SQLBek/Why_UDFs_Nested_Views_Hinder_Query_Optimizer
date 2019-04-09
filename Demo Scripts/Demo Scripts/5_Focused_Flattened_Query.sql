@@ -1,3 +1,6 @@
+-- TURN ON ACTUAL EXECUTION PLAN
+--
+-- Execute all immediately or pre-stage
 USE AutoDealershipDemo;
 DBCC FREEPROCCACHE
 SET STATISTICS IO ON
@@ -41,6 +44,7 @@ GROUP BY
 	SalesPerson.FirstName,
 	YEAR(SalesHistory.TransactionDate);
 GO
+PRINT '-----'
 
 
 
@@ -52,7 +56,6 @@ GO
 -----
 -- Run NoUDF query as Baseline
 -- OPTIONAL: Spin up workload
--- Turn on Actual Execution Plan
 -- DBCC FREEPROCCACHE
 SELECT 
 	FirstName,
